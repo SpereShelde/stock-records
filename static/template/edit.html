@@ -192,8 +192,8 @@
               user: $('#users').val(),
               action: $('#actions').val(),
               stockId: $('#stockId').val(),
-              amount: parseInt($('#amount').val()),
-              price: parseInt($('#price').val()),
+              amount: parseFloat($('#amount').val()),
+              price: parseFloat($('#price').val()),
             },
             (data,status) => {
                 console.log('completed');

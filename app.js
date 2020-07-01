@@ -6,6 +6,8 @@ const bodyParser = require('koa-bodyparser');
 const path = require('path');
 const Records = require('./controllers/records');
 const Users = require('./controllers/users');
+const Status = require('./controllers/status');
+const NP = require('number-precision');
 
 class App {
   constructor() {
@@ -13,6 +15,7 @@ class App {
     // this.configController = new ConfigController(this.models.configModel);
     this.records = new Records();
     this.users = new Users();
+    this.status = new Status();
     const routerMiddleware = createRouter({
       GET: {
         '/': async (ctx) => await this.index(ctx),
@@ -23,12 +26,9 @@ class App {
       POST: {
         '/user': async (ctx) => {
           const name = ctx.request.body.name;
-          const records = await this.records.getRecords({
-            name,
-          });
-          const users = await this.users.getUsers({
-            name: name
-          });
+          const records = await this.records.getRecords({ name });
+          const users = await this.users.getUsers({ name });
+          const userStatus = await this.status.getStatus({ name });
           const beautyRecords = []
           records.forEach((record) => {
             beautyRecords.push({
@@ -37,14 +37,15 @@ class App {
               time: new Date(record.time).toLocaleString(),
               stockId: record.stockId,
               action: record.action,
-              amount: record.amount,
-              price: record.price,
+              amount: NP.round(record.amount, 2),
+              price: NP.round(record.price, 2),
               valid: record.valid,
             })
           })
           ctx.body = {
             records: beautyRecords,
-            balance: users[0].balance,
+            balance: NP.round(users[0].balance, 2),
+            userStatus,
           };
         },
         '/invalidate': async (ctx) => {
@@ -54,7 +55,8 @@ class App {
         },
         '/new': async (ctx) => {
           const { user, action, stockId, amount, price } = ctx.request.body;
-          let balance = amount * price;
+          let balance = NP.round(NP.times(amount, price), 2);
+          // let balance = amount * price;
           if (action === 'buy') {
             balance *= -1;
           }
@@ -68,6 +70,11 @@ class App {
             valid: true,
           })
           await this.users.editBalance(balance, user);
+          if (action === 'sell') {
+            await this.status.editAmount(-parseFloat(amount), parseFloat(price), stockId, user);
+          } else {
+            await this.status.editAmount(parseFloat(amount), parseFloat(price), stockId, user);
+          }
           ctx.body = {};
         }
       }
@@ -87,6 +94,7 @@ class App {
   async index(ctx) {
     const records = await this.records.getRecords();
     const users = await this.users.getUsers();
+    const status = await this.status.getStatus();
     const beautyRecords = []
     records.forEach((record) => {
       beautyRecords.push({
@@ -95,14 +103,16 @@ class App {
         time: new Date(record.time).toLocaleString(),
         stockId: record.stockId,
         action: record.action,
-        amount: record.amount,
-        price: record.price,
+        amount: NP.round(record.amount, 2),
+        price: NP.round(record.price, 2),
         valid: record.valid,
       })
     })
+
     ctx.state = {
       records: beautyRecords,
       users,
+      status,
     }
     return ctx.render('index.html')
   }
@@ -118,8 +128,8 @@ class App {
         time: new Date(record.time).toLocaleString(),
         stockId: record.stockId,
         action: record.action,
-        amount: record.amount,
-        price: record.price,
+        amount: NP.round(record.amount, 2),
+        price: NP.round(record.price, 2),
         valid: record.valid,
       })
     })

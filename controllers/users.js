@@ -20,7 +20,7 @@ class Users {
         type: Sequelize.STRING(20),
       },
       balance: {
-        type: Sequelize.INTEGER(),
+        type: Sequelize.DOUBLE(),
       },
     }, {
       freezeTableName: true,

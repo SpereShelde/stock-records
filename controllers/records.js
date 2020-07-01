@@ -1,5 +1,6 @@
 const Sequelize = require('sequelize');
 const path = require('path');
+const NP = require('number-precision');
 
 class Records {
   constructor() {
@@ -28,10 +29,10 @@ class Records {
         type: Sequelize.STRING(20),
       },
       amount: {
-        type: Sequelize.INTEGER(),
+        type: Sequelize.DOUBLE(),
       },
       price: {
-        type: Sequelize.INTEGER(),
+        type: Sequelize.DOUBLE(),
       },
       valid: {
         type: Sequelize.BOOLEAN(),
@@ -60,7 +61,8 @@ class Records {
     if (!record) {
       return 0;
     }
-    const balance = record.price * record.amount;
+    const balance = NP.round(NP.times(record.price, record.amount), 2);
+    // const balance = record.price * record.amount;
     await this.model.destroy({ where: { rid } })
     return balance;
   }
@@ -70,7 +72,8 @@ class Records {
     if (!record) {
       return 0;
     }
-    const balance = record.price * record.amount;
+    const balance = NP.round(NP.times(record.price, record.amount), 2);
+    // const balance = record.price * record.amount;
     const name = record.name;
     record.valid = false;
     await record.save();
