@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "handlebars": "^4.7.6",
+    "handlebars": "^4.7.7",
     "koa": "^2.11.0",
     "koa-bestest-router": "^1.0.2",
     "koa-better-serve": "^2.0.7",
